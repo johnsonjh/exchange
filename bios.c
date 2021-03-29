@@ -1,5 +1,10 @@
 /* Since this version of the BIOS interfaces with the host OS, we need
  * host includes.
+ *
+ * revisions:
+ *
+ *	2006-03-06 rli: New P112 disk definition, initial RL02
+ *	  definition.
  */
 
 #include <stdio.h>
@@ -46,7 +51,7 @@ unsigned short int bios_flush( void );
  *      db      4               ;Block shift
  *      db      15              ;Block mask
  *      db      0               ;Extent mask
- *      dw      715-1           ;Max. allocn. block no.
+ *      dw      711-1           ;Max. allocn. block no.
  *      dw      128-1           ;No. of directory entries -1
  *      db      11000000B       ;Bit-map for allocn. blocks
  *      db      00000000B       ;  used for directory
@@ -61,11 +66,11 @@ bios_dpb_t bios_p112_dpb = {
   15,  /* block mask */
    0,  /* extent mask */
    0,  /* reserved */
- 714,  /* 2048-byte blcoks per disk - 1 */
- 127,  /* number of directory entries - 1 */
+ 710,  /* 2048-byte blcoks per disk - 1 */
+ 255,  /* number of directory entries - 1 */
    0,  /* reserved */
-  32,  /* size of check vector */
-   1   /* reserved tracks */
+  64,  /* size of check vector */
+   2   /* reserved tracks */
 };
 
 /***
@@ -87,7 +92,47 @@ bios_dpb_t bios_8inch_dpb = {
     2   /* track offset */
 };
 
+/***
+ *
+ * RL02 10MB cartridge
+ *
+ *	An RL02 contains 512 cylinders, two heads, and 40 256-byte
+ *	sectors per track. Consequently, there are:
+ *
+ *	- 1024 tracks (2 per cylinder)
+ *	-   80 128-byte CP/M sectors per track
+ *
+ *	We'll reserve 2 cylinders (4 tracks) for the system (40KB).
+ *
+ *	We also need to avoid the last cylinder on the drive because
+ *	it contains a factory bad block table.
+ *
+ *	Consequently, we'll see:
+ *
+ *	- 1024 - 4 - 2 = 1018 tracks
+ *
+ *	At 4KB per cluster with the maximum 16 clusters allocated
+ *	to the directory, we can almost (but not quite) allocate
+ *	the entire disk into files containing a single cluster.
+ *	(perhaps I should point out here that I do not know whether
+ *	CP/M-68K is, in fact, limited to a 16-cluster directory;
+ *	CP/M-80 places a 16-bit mask used to pre-allocate the
+ *	directory, which is why it is limited to 16 clusters).
+ *
+ ***/
 
+bios_dpb_t bios_rl02_dpb = {
+   80,	/* There are 40 256-byte sectors per track. */
+    5,	/* Block shift factor; we're using 4KB clusters. */
+   31,   /* Block mask, again 4KB clusters. */
+    1,   /* Extent mask. 4KB clusters, >256 clusters per disk. */
+    0,   /* Reserved */
+ 2544,   /* Clusters per disk - 1 */
+ 2047,   /* number of directory entries - 1 */
+    0,   /* reserved */
+  256,   /* size of check vector */
+    4    /* reserved tracks */
+};
  
 unsigned char bios_dirbuf[ 128 ];
 
@@ -173,6 +218,21 @@ bios_dph_t bios_8inch_dph = {
   0, 0, 0,		/* scratch words */
   bios_dirbuf,		/* directory buffer */
   &bios_8inch_dpb,	/* disk parameter block */
+  bios_drivea_csv,	/* checksum vector */
+  bios_drivea_alv	/* allocation vector */
+};
+
+/***
+ *
+ * RL02 DPH
+ *
+ ***/
+
+bios_dph_t bios_rl02_dph = {
+  0,			/* sector translation table */
+  0, 0, 0,		/* scratch words */
+  bios_dirbuf,		/* directory buffer */
+  &bios_rl02_dpb,	/* disk parameter block */
   bios_drivea_csv,	/* checksum vector */
   bios_drivea_alv	/* allocation vector */
 };
@@ -1170,6 +1230,7 @@ void usage( void )
 {
   fprintf( stderr, "usage: exchange " );
   fprintf( stderr, "[-p112] " );
+  fprintf( stderr, "[-rl02] " );
   fprintf( stderr, "imagefile\n" );
   exit( EXIT_FAILURE );
 }
@@ -1184,6 +1245,11 @@ int main( int ArgC, char **ArgV )
     if( nextarg == ArgC ) usage();
     if( strcmp( "-p112", ArgV[ nextarg ] ) == 0 ) {
       bios_valid_dph = &bios_p112_dph;
+      nextarg++;
+      continue;
+    }
+    if( strcmp( "-rl02", ArgV[ nextarg ] ) == 0 ) {
+      bios_valid_dph = &bios_rl02_dph;
       nextarg++;
       continue;
     }
