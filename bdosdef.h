@@ -168,7 +168,7 @@ struct stvars
         UBYTE   t_buff[TBUFSIZ]; /*sw Type-ahead buffer itself             */
 };
 				/*sw removed next line from structure	   */
-        UBYTE   *chainp;        /* Used for chain to program call          */
+		extern	UBYTE   *chainp; /* Used for chain to program call          */
 
 
 /* Console buffer structure declaration */

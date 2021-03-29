@@ -285,8 +285,8 @@ WORD    dirindx;                /* index into directory */
                     else *(UWORD *)fp = *(UWORD *)dp;
                 }
                 else *(UWORD *)dp = *(UWORD *)fp;
-                /*(UWORD *)*/*fp += 1;
-                /*(UWORD *)*/*dp += 1;
+                (UWORD *)*fp += 1;
+                (UWORD *)*dp += 1;
                 i -= 1;
             } while (i);
         }
