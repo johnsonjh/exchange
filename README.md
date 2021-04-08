@@ -1,6 +1,6 @@
 # Exchange
 
-## CP/M for UNIX
+Minimal CP/M for UNIX
 
 ### Overview
 
