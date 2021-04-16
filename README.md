@@ -1,5 +1,7 @@
 # Exchange
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/8f3cf31cc2464f8596588b611802892a)](https://app.codacy.com/gh/johnsonjh/exchange?utm_source=github.com&utm_medium=referral&utm_content=johnsonjh/exchange&utm_campaign=Badge_Grade_Settings)
+
 Minimal CP/M for UNIX
 
 ### Overview
